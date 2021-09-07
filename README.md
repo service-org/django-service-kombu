@@ -35,10 +35,10 @@ KOMBU = {
         'hostname': 'pyamqp://admin:nimda@127.0.0.1:5672//'
     },
     'consume_options': {
-        
+
     },
     'publish_options': {
-        
+
     }
 }
 ```
@@ -58,8 +58,8 @@ from kombu import Exchange
 from django.urls import path
 from django.http.request import HttpRequest
 from django.http.response import HttpResponse
-from django_service_kombu.proxy import get_amqp_pub_proxy
-from django_service_kombu.proxy import get_amqp_rpc_proxy
+from django_service_kombu.proxy import amqp_pub
+from django_service_kombu.proxy import amqp_rpc
 
 
 def test_amqp_pub(request: HttpRequest) -> HttpResponse:
@@ -68,11 +68,9 @@ def test_amqp_pub(request: HttpRequest) -> HttpResponse:
     @param request: 请求对象
     @return: HttpResponse
     """
-    with get_amqp_pub_proxy() as pub:
-        publish_options = {'exchange': Exchange('demo'),
-                           'routing_key': 'demo.test_amqp_rpc'}
-        pub.publish('from django test_amqp_pub', **publish_options)
-    return HttpResponse('succ')
+    publish_options = {'exchange': Exchange('demo'), 'routing_key': 'demo.test_amqp_rpc'}
+    amqp_pub.publish('from django test_amqp_pub', **publish_options)
+    return HttpResponse('publish succ')
 
 
 def test_amqp_rpc(request: HttpRequest) -> HttpResponse:
@@ -81,10 +79,8 @@ def test_amqp_rpc(request: HttpRequest) -> HttpResponse:
     @param request: 请求对象
     @return: HttpResponse
     """
-    with get_amqp_rpc_proxy() as rpc:
-        body, message = rpc.send_request('demo.test_amqp_rpc', {}).result
-    data = json.dumps(body)
-    return HttpResponse(data)
+    body, message = amqp_rpc.send_request('demo.test_amqp_rpc', {}, timeout=1).result
+    return HttpResponse(json.dumps(body))
 
 
 urlpatterns = [
@@ -97,6 +93,10 @@ urlpatterns = [
 
 > python3 manage.py runserver -v 3 --traceback --force-color
 
+# 优化建议
+
+> uwsgi驱动时请设置`lazy-apps = true`和`enable-threads = true`
+
 # 接口测试
 
 ```bash
@@ -104,4 +104,3 @@ curl http://127.0.0.1:8000/test-amqp-pub/
 
 curl http://127.0.0.1:8000/test-amqp-rpc/
 ```
-
