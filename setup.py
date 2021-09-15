@@ -18,6 +18,7 @@ setup(
     long_description=readme,
     long_description_content_type='text/markdown',
     packages=find_packages(exclude=['test', 'test.*']),
+    install_requires=['service-kombu'],
     classifiers=[
         'Typing :: Typed',
         'Operating System :: MacOS',
@@ -25,6 +26,5 @@ setup(
         'Operating System :: POSIX',
         'Programming Language :: Python',
         'Programming Language :: Python :: 3.9',
-    ],
-    install_requires=['django==3.2.7', 'service-kombu']
+    ]
 )
